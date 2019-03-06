@@ -36,13 +36,13 @@ let update x v s = fun y -> if x = y then v else s y
 let s = update "x" 1 @@ update "y" 2 @@ update "z" 3 @@ update "t" 4 empty
 
 (* Some testing; comment this definition out when submitting the solution. *)
-let _ =
+(* let _ =
   List.iter
     (fun x ->
        try  Printf.printf "%s=%d\n" x @@ s x
        with Failure s -> Printf.printf "%s\n" s
     ) ["x"; "a"; "y"; "z"; "t"; "b"]
-
+ *)
 (* Expression evaluator
 
      val eval : state -> expr -> int
@@ -50,5 +50,32 @@ let _ =
    Takes a state and an expression, and returns the value of the expression in 
    the given state.
 *)
-let eval = failwith "Not implemented yet"
-                    
+let to_bool x = x != 0
+
+let from_bool x = if x then 1 else 0
+
+let eval_boolop op x y = 
+  match op with
+  | "!!" -> (to_bool x) || (to_bool y)
+  | "&&" -> (to_bool x) && (to_bool y)
+  | "==" -> x == y
+  | "!=" -> x != y
+  | "<=" -> x <= y
+  | "<"  -> x < y
+  | ">=" -> x >= y
+  | ">"  -> x > y
+
+let rec eval_binop op x y = 
+  match op with
+  | "+" -> x + y
+  | "-" -> x - y
+  | "*" -> x * y
+  | "/" -> x / y
+  | "%" -> x mod y
+  | bool_op -> from_bool (eval_boolop bool_op x y)
+
+let rec eval state expr = 
+  match expr with
+  | Const (const) -> const
+  | Var (var) -> state var
+  | Binop (op, x, y) -> eval_binop op (eval state x) (eval state y)
