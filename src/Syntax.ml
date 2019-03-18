@@ -41,7 +41,35 @@ module Expr =
        Takes a state and an expression, and returns the value of the expression in 
        the given state.
     *)
-    let eval _ = failwith "Not implemented yet"
+    let to_bool x = x != 0
+
+    let from_bool x = if x then 1 else 0
+
+    let eval_boolop op x y = 
+      match op with
+      | "!!" -> (to_bool x) || (to_bool y)
+      | "&&" -> (to_bool x) && (to_bool y)
+      | "==" -> x == y
+      | "!=" -> x != y
+      | "<=" -> x <= y
+      | "<"  -> x < y
+      | ">=" -> x >= y
+      | ">"  -> x > y
+
+    let rec eval_binop op x y = 
+      match op with
+      | "+" -> x + y
+      | "-" -> x - y
+      | "*" -> x * y
+      | "/" -> x / y
+      | "%" -> x mod y
+      | bool_op -> from_bool (eval_boolop bool_op x y)
+
+    let rec eval state expr = 
+      match expr with
+      | Const (const) -> const
+      | Var (var) -> state var
+      | Binop (op, x, y) -> eval_binop op (eval state x) (eval state y)
 
   end
                     
@@ -65,7 +93,14 @@ module Stmt =
 
        Takes a configuration and a statement, and returns another configuration
     *)
-    let eval _ = failwith "Not implemented yet"
+    let rec eval (state, input, output) t = 
+    match t with
+    | Read (var) -> let first::rest = input 
+                    in (Expr.update var first state, rest, output)
+    | Write (expr) -> (state, input, output @ [Expr.eval state expr])
+    | Assign (var, expr) -> (Expr.update var (Expr.eval state expr) state, input, output)
+    | Seq (t1, t2) -> eval (eval (state, input, output) t1) t2
+    | _ -> failwith ""
                                                          
   end
 
